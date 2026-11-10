@@ -135,8 +135,6 @@ export const renderDashboard = (main, user) => {
   const content = el("div", {
     class: "dashboard-content",
     id: "dashboard-content",
-    role: "region",
-    "aria-labelledby": "dashboard-title",
     "aria-busy": "true"
   });
 

@@ -1,11 +1,36 @@
-const getJson = async (url) => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+const request = async (url, options = {}) => {
+  const response = await fetch(url, options);
+  if (response.status === 204) {
+    return null;
   }
-  return response.json();
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    data = null;
+  }
+  if (!response.ok) {
+    const failure = new Error(data?.error || `Request failed: ${response.status}`);
+    if (response.status === 400 && data?.errors) {
+      failure.errors = data.errors;
+    }
+    throw failure;
+  }
+  return data;
 };
 
-export const getAppointments = () => getJson("/api/appointments");
+const send = (method, url, data) => request(url, {
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+});
 
-export const getPatients = () => getJson("/api/patients");
+export const getAppointments = () => request("/api/appointments");
+
+export const getPatients = () => request("/api/patients");
+
+export const createAppointment = (data) => send("POST", "/api/appointments", data);
+
+export const updateAppointment = (id, data) => send("PUT", `/api/appointments/${id}`, data);
+
+export const deleteAppointment = (id) => send("DELETE", `/api/appointments/${id}`);

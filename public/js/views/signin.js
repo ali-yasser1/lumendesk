@@ -1,38 +1,15 @@
 import { announce, el, showToast } from "../ui.js";
+import { buildSummary, setFieldError } from "../form.js";
 
-const fieldMessages = {
+const messages = {
   username: "Enter your username",
   password: "Enter your password"
 };
 
-const setFieldError = (input, show) => {
-  const error = document.querySelector(`#${input.id}-error`);
-  if (show) {
-    input.setAttribute("aria-invalid", "true");
-  } else {
-    input.removeAttribute("aria-invalid");
-  }
-  error.hidden = !show;
-};
-
 const validateField = (input) => {
   const empty = input.value.trim() === "";
-  setFieldError(input, empty);
+  setFieldError(input, empty ? messages[input.id] : "");
   return empty;
-};
-
-const buildSummary = (fields) => {
-  const count = fields.length;
-  const heading = `Please fix ${count} ${count === 1 ? "problem" : "problems"}`;
-  const list = el("ul", {}, fields.map((field) => el("li", {}, el("a", {
-    href: `#${field.id}`,
-    text: fieldMessages[field.id],
-    onClick: (event) => {
-      event.preventDefault();
-      field.focus();
-    }
-  }))));
-  return [el("h2", { text: heading }), list];
 };
 
 export const renderSignIn = (main) => {
@@ -43,25 +20,15 @@ export const renderSignIn = (main) => {
     name: "username",
     type: "text",
     autocomplete: "username",
-    required: true,
-    "aria-describedby": "username-error"
+    required: true
   });
   const password = el("input", {
     id: "password",
     name: "password",
     type: "password",
     autocomplete: "current-password",
-    required: true,
-    "aria-describedby": "password-error"
+    required: true
   });
-  const usernameError = el("p", { class: "field-error", id: "username-error", hidden: true }, [
-    el("span", { class: "field-error-icon", "aria-hidden": "true", text: "!" }),
-    el("span", { text: fieldMessages.username })
-  ]);
-  const passwordError = el("p", { class: "field-error", id: "password-error", hidden: true }, [
-    el("span", { class: "field-error-icon", "aria-hidden": "true", text: "!" }),
-    el("span", { text: fieldMessages.password })
-  ]);
   const showPassword = el("button", {
     class: "button button-ghost",
     type: "button",
@@ -82,12 +49,12 @@ export const renderSignIn = (main) => {
   password.addEventListener("blur", () => validateField(password));
   username.addEventListener("input", () => {
     if (username.value.trim()) {
-      setFieldError(username, false);
+      setFieldError(username, "");
     }
   });
   password.addEventListener("input", () => {
     if (password.value.trim()) {
-      setFieldError(password, false);
+      setFieldError(password, "");
     }
   });
 
@@ -95,13 +62,11 @@ export const renderSignIn = (main) => {
     summary,
     el("div", { class: "field" }, [
       el("label", { for: "username", text: "Username" }),
-      username,
-      usernameError
+      username
     ]),
     el("div", { class: "field" }, [
       el("label", { for: "password", text: "Password" }),
-      el("div", { class: "password-field" }, [password, showPassword]),
-      passwordError
+      el("div", { class: "password-field" }, [password, showPassword])
     ]),
     submit
   );
@@ -110,7 +75,7 @@ export const renderSignIn = (main) => {
     event.preventDefault();
     const invalid = [username, password].filter((input) => validateField(input));
     if (invalid.length > 0) {
-      summary.replaceChildren(...buildSummary(invalid));
+      summary.replaceChildren(...buildSummary(invalid, messages));
       summary.hidden = false;
       summary.focus();
       return;
