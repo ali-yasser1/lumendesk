@@ -22,11 +22,9 @@ const buildStatusField = () => {
     required: true, "aria-describedby": "status-hint"
   }));
   const node = el("fieldset", { class: "field radio-fieldset" }, [
-    el("legend", { text: "Status" }),
-    hint("status-hint", "Scheduled visits cannot be in the past."),
+    el("legend", { text: "Status" }), hint("status-hint", "Scheduled visits cannot be in the past."),
     el("div", { class: "radio-group" }, inputs.map((input, index) =>
-      el("label", { class: "radio-option", for: input.id }, [input, statuses[index]])))
-  ]);
+      el("label", { class: "radio-option", for: input.id }, [input, statuses[index]])))]);
   return { inputs, node };
 };
 
@@ -85,8 +83,7 @@ const buildMainSection = (inputs, status) => el("fieldset", { class: "form-secti
     status.node,
     el("div", { class: "field checkbox-field" }, [
       el("label", { for: inputs.urgent.id }, [inputs.urgent, el("span", { text: "Mark as urgent" })]),
-      hint("urgent-hint", "Urgent visits are highlighted in the records table.")
-    ])
+      hint("urgent-hint", "Urgent visits are highlighted in the records table.")])
   ])
 ]);
 
@@ -106,19 +103,12 @@ const buildNotesSection = (inputs) => el("fieldset", { class: "form-section" }, 
 
 // puts an existing appointment into the inputs, or the defaults for a new one
 export const applyValues = (fields, appointment) => {
-  if (!appointment) {
-    fields.date.value = today();
-    fields.statusInputs[0].checked = true;
-    return;
-  }
+  if (!appointment) { fields.date.value = today(); fields.statusInputs[0].checked = true; return; }
   fields.patient.value = String(appointment.patient_id);
-  fields.date.value = appointment.date;
-  fields.time.value = appointment.time;
-  fields.type.value = appointment.type;
-  fields.clinician.value = appointment.clinician;
-  fields.statusInputs.forEach((input) => (input.checked = input.value === appointment.status));
-  fields.urgent.checked = Boolean(appointment.urgent);
-  fields.notes.value = appointment.notes;
+  fields.date.value = appointment.date; fields.time.value = appointment.time;
+  fields.type.value = appointment.type; fields.clinician.value = appointment.clinician;
+  fields.statusInputs.forEach((input) => { input.checked = input.value === appointment.status; });
+  fields.urgent.checked = Boolean(appointment.urgent); fields.notes.value = appointment.notes;
   fields.telehealthInput.value = appointment.telehealth_link || "";
   fields.followupInput.value = appointment.followup_ref || "";
 };
@@ -132,9 +122,7 @@ export const wireFields = (fields) => {
   fields.patient.addEventListener("change", () => setFieldError(fields.patient, ""));
   fields.type.addEventListener("change", () => { setFieldError(fields.type, ""); toggleDynamic(fields); });
   fields.statusInputs.forEach((input) => input.addEventListener("change", () => {
-    setFieldError(fields.statusInputs[0], "");
-    if (fields.date.value) { setFieldError(fields.date, ""); }
-  }));
+    setFieldError(fields.statusInputs[0], ""); if (fields.date.value) { setFieldError(fields.date, ""); } }));
   fields.notes.addEventListener("input", fields.updateCounter);
 };
 
@@ -147,13 +135,9 @@ export const buildForm = (patients, appointments) => {
   const followup = buildHiddenField({ id: "followup_ref", type: "text", autocomplete: "off", label: "Previous appointment reference", hintId: "followup-hint", hintText: "Use the reference from the previous appointment." });
   const save = el("button", { class: "button button-primary", type: "submit", name: "destination", value: "stay", text: "Save appointment" });
   const saveRecords = el("button", { class: "button", type: "submit", name: "destination", value: "records", text: "Save and go to records" });
-  const form = el("form", { class: "appointment-form glass", novalidate: true }, [
-    summary,
-    buildMainSection(inputs, status),
-    buildDetailsSection(telehealth, followup),
-    buildNotesSection(inputs),
-    el("div", { class: "form-actions" }, [save, saveRecords])
-  ]);
+  const form = el("form", { class: "appointment-form", novalidate: true }, [
+    summary, buildMainSection(inputs, status), buildDetailsSection(telehealth, followup),
+    buildNotesSection(inputs), el("div", { class: "form-actions" }, [save, saveRecords])]);
   const allFields = [inputs.patient, inputs.date, inputs.time, inputs.type, inputs.clinician, telehealth.input, followup.input, inputs.notes];
   const linked = { telehealthInput: telehealth.input, telehealthField: telehealth.node, followupInput: followup.input, followupField: followup.node };
   return { ...inputs, form, summary, save, saveRecords, allFields, statusInputs: status.inputs, ...linked };

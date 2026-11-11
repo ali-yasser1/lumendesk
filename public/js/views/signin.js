@@ -1,5 +1,5 @@
 // renders the sign in view with its form, validation and fake sign in
-import { announce, el, showToast } from "../ui.js";
+import { announce, el, showMessage } from "../ui.js";
 import { buildSummary, setFieldError } from "../form.js";
 
 // the messages shown for each invalid field
@@ -32,84 +32,69 @@ const togglePassword = (password, button) => {
 
 // clears the inline error of an input as soon as it holds text
 const clearWhenFilled = (input) => {
-  input.addEventListener("input", () => {
-    if (input.value.trim()) {
-      setFieldError(input, "");
-    }
-  });
+  input.addEventListener("input", () => { if (input.value.trim()) { setFieldError(input, ""); } });
 };
 
 // runs the fake sign in then moves the user to the dashboard
 const signIn = (form, submit, username) => {
   form.setAttribute("aria-busy", "true");
   submit.disabled = true;
-  submit.replaceChildren(
-    el("span", { class: "spinner", "aria-hidden": "true" }),
-    document.createTextNode("Signing in...")
-  );
+  submit.replaceChildren(el("span", { class: "spinner", "aria-hidden": "true" }), document.createTextNode("Signing in..."));
   announce("Signing in");
   window.setTimeout(() => {
-    const name = username.value.trim();
-    sessionStorage.setItem("lumen-user", name);
+    const name = username.value.trim(); sessionStorage.setItem("lumen-user", name);
     document.dispatchEvent(new CustomEvent("lumen:authchange"));
-    showToast(`Welcome back, ${name}`, "success");
-    window.setTimeout(() => {
-      location.hash = "#/dashboard";
-    }, 300);
+    showMessage(`Welcome back, ${name}`, "success");
+    window.setTimeout(() => { location.hash = "#/dashboard"; }, 300);
   }, 1200);
 };
 
-// builds the sign in panel with its fields, toggle and submit button
-export const renderSignIn = (main) => {
-  const form = el("form", { class: "signin-form", novalidate: true });
-  const summary = el("div", { class: "error-summary", role: "alert", tabindex: "-1", hidden: true });
-  const username = el("input", {
-    id: "username", name: "username", type: "text", autocomplete: "username", required: true
-  });
-  const password = el("input", {
-    id: "password", name: "password", type: "password", autocomplete: "current-password", required: true
-  });
-  const showPassword = el("button", {
-    class: "button button-ghost", type: "button",
-    "aria-pressed": "false", "aria-controls": "password", text: "Show password"
-  });
-  const submit = el("button", { class: "button button-primary signin-submit", type: "submit", text: "Sign in" });
-
+// wires the validation and submit behaviour of the sign in form
+const wireForm = (form, summary, username, password, showPassword, submit) => {
   showPassword.addEventListener("click", () => togglePassword(password, showPassword));
   username.addEventListener("blur", () => validateField(username));
   password.addEventListener("blur", () => validateField(password));
   clearWhenFilled(username);
   clearWhenFilled(password);
-
-  form.append(
-    summary,
-    el("div", { class: "field" }, [
-      el("label", { for: "username", text: "Username" }),
-      username
-    ]),
-    el("div", { class: "field" }, [
-      el("label", { for: "password", text: "Password" }),
-      el("div", { class: "password-field" }, [password, showPassword])
-    ]),
-    submit
-  );
-
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const invalid = [username, password].filter((input) => validateField(input));
-    if (invalid.length > 0) {
-      return showSummary(summary, invalid);
-    }
+    if (invalid.length > 0) { return showSummary(summary, invalid); }
     summary.hidden = true;
     signIn(form, submit, username);
   });
+};
 
+// builds the sign in form with its fields, toggle and submit button
+const buildForm = () => {
+  const form = el("form", { class: "signin-form", novalidate: true });
+  const summary = el("div", { class: "error-summary", role: "alert", tabindex: "-1", hidden: true });
+  const username = el("input", { id: "username", name: "username", type: "text", autocomplete: "username", required: true });
+  const password = el("input", { id: "password", name: "password", type: "password", autocomplete: "current-password", required: true });
+  const showPassword = el("button", {
+    class: "button", type: "button", "aria-pressed": "false", "aria-controls": "password", text: "Show password"
+  });
+  const submit = el("button", { class: "button button-primary signin-submit", type: "submit", text: "Sign in" });
+  wireForm(form, summary, username, password, showPassword, submit);
+  form.append(
+    summary,
+    el("div", { class: "field" }, [el("label", { for: "username", text: "Username" }), username]),
+    el("div", { class: "field" }, [
+      el("label", { for: "password", text: "Password" }),
+      el("div", { class: "password-field" }, [password, showPassword])]),
+    submit
+  );
+  return form;
+};
+
+// assembles the sign in view around its form
+export const renderSignIn = (main) => {
   main.append(
     el("section", { class: "signin-view", "aria-labelledby": "signin-title" }, [
-      el("div", { class: "signin-panel glass" }, [
+      el("div", { class: "signin-panel" }, [
         el("h1", { id: "signin-title", text: "Sign in to LumenDesk" }),
         el("p", { class: "view-subtitle", text: "Use any username and password to enter the clinic workspace." }),
-        form
+        buildForm()
       ])
     ])
   );

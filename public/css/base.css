@@ -1,182 +1,106 @@
-/* element defaults, the still aurora backdrop and the global motion switch */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* element defaults, the solid page backdrop and the global motion switch */
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; scroll-padding-top: 6rem; }
+body, h1, h2, h3, p, figure, blockquote, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; }
+img, picture, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; }
+button { cursor: pointer; }
 
-html {
-  color-scheme: dark;
-  scroll-behavior: smooth;
-  scroll-padding-top: 6rem;
-}
-
-body,
-h1,
-h2,
-h3,
-p,
-figure,
-blockquote,
-dl,
-dd {
-  margin: 0;
-}
-
-ul,
-ol {
-  margin: 0;
-  padding: 0;
-}
-
-img,
-picture,
-svg {
-  display: block;
-  max-width: 100%;
-}
-
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-/* the aurora glow painted behind every page, kept completely still */
+/* the solid navy backdrop behind every page */
 body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  min-height: 100vh; min-height: 100dvh;
   color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  font-family: var(--font-sans); font-size: var(--text-base); line-height: var(--leading-normal);
   background-color: var(--color-bg);
-  background-image:
-    radial-gradient(circle at 12% 18%, var(--aurora-cyan), transparent 32rem),
-    radial-gradient(circle at 88% 12%, var(--aurora-violet), transparent 34rem),
-    radial-gradient(circle at 78% 82%, var(--aurora-pink), transparent 30rem),
-    radial-gradient(circle at 24% 88%, var(--aurora-lime), transparent 28rem);
-  background-attachment: fixed;
-  background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%;
-  background-size: 140% 140%;
 }
 
 /* links */
-a {
-  color: var(--color-cyan);
-  text-decoration-thickness: 0.08em;
-  text-underline-offset: 0.18em;
-}
-
-a:hover {
-  color: var(--color-lime);
-}
+a { color: var(--color-cyan); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+a:hover { color: var(--color-cyan-strong); }
 
 /* the single focus ring used across the whole app */
-:focus-visible {
-  border-radius: var(--radius-sm);
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 6px var(--color-focus-halo), 0 0 24px var(--color-focus-glow);
-  scroll-margin-block: 6rem;
-}
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; scroll-margin-block: 6rem; }
 
-::selection {
-  color: var(--color-text-inverse);
-  background-color: var(--color-cyan);
-}
+::selection { color: var(--color-text-inverse); background-color: var(--color-cyan); }
 
 /* the keyboard only link that jumps straight to the main region */
 .skip-link {
-  position: fixed;
-  top: var(--space-3);
-  left: var(--space-3);
-  z-index: 100;
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-pill);
-  color: var(--color-text-inverse);
-  font-weight: var(--weight-semibold);
-  text-decoration: none;
+  position: fixed; top: var(--space-3); left: var(--space-3); z-index: 100;
+  display: inline-flex; align-items: center; min-height: 2.75rem;
+  padding: var(--space-3) var(--space-5); border-radius: var(--radius);
+  color: var(--color-text-inverse); font-weight: var(--weight-semibold); text-decoration: none;
   background-color: var(--color-cyan);
   transform: translateY(calc(-100% - var(--space-6)));
-  transition: transform var(--duration-base) var(--ease-standard);
 }
-
-.skip-link:focus {
-  transform: translateY(0);
-}
+.skip-link:focus { transform: translateY(0); }
 
 /* hides content from sighted users while keeping it for screen readers */
 .visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important;
 }
 
 /* heading and paragraph rhythm */
-h1,
-h2,
-h3 {
-  line-height: var(--leading-tight);
-  letter-spacing: -0.02em;
-  text-wrap: balance;
+h1, h2, h3 { line-height: var(--leading-tight); text-wrap: balance; }
+h1 { font-size: clamp(1.75rem, 5vw, 2.5rem); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+p { max-width: 70ch; }
+
+/* the solid header bar holding the brand, nav and sign out button */
+.site-header {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) clamp(var(--space-4), 4vw, var(--space-7));
+  border-bottom: 1px solid var(--color-border); background: var(--color-surface);
 }
 
-h1 {
-  font-size: clamp(var(--text-3xl), 6vw, var(--text-5xl));
+/* the clinic name link */
+.brand {
+  display: inline-flex; align-items: center; min-height: 2.75rem;
+  color: var(--color-text); font-size: var(--text-lg); font-weight: var(--weight-bold); text-decoration: none;
 }
 
-h2 {
-  font-size: var(--text-2xl);
+/* the primary navigation links in a wrapping row */
+.site-nav { margin-inline: auto; }
+.site-nav[hidden], .signout-button[hidden] { display: none; }
+.site-nav ul { display: flex; flex-wrap: wrap; gap: var(--space-1); list-style: none; }
+.site-nav a {
+  display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius); color: var(--color-text-muted); font-weight: var(--weight-medium); text-decoration: none;
+}
+.site-nav a:hover { color: var(--color-text); background-color: rgba(127, 247, 255, 0.1); }
+.site-nav a[aria-current="page"] { color: var(--color-cyan); background-color: rgba(127, 247, 255, 0.14); }
+
+/* the sign out button parked at the end of the header */
+.signout-button { font-size: var(--text-sm); }
+
+/* the page body region between the header and footer */
+main {
+  flex: 1; width: min(100% - 2rem, var(--content-max)); margin-inline: auto;
+  padding-block: var(--space-6); overflow-wrap: break-word;
 }
 
-h3 {
-  font-size: var(--text-xl);
-}
+/* the shell every view renders into */
+.view { display: grid; gap: var(--space-5); }
+.view-header { display: grid; gap: var(--space-2); }
+.view-subtitle { color: var(--color-text-muted); font-size: var(--text-lg); }
 
-p {
-  max-width: 70ch;
+/* the page footer */
+.site-footer {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-1) var(--space-2);
+  padding: var(--space-5) clamp(var(--space-4), 4vw, var(--space-7));
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted); font-size: var(--text-sm); text-align: center;
 }
+.site-footer p { max-width: none; }
 
-/* one global switch that settles all motion when the visitor asks for it */
+/* one global switch that stops all motion when the visitor asks for it */
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  .button:hover,
-  .button:active,
-  .stat-card:hover,
-  .stat-card:focus-within,
-  .quick-action:hover,
-  .quick-action:focus-visible,
-  .records-table tbody tr:hover,
-  .row-action:hover {
-    transform: none;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important; transition-duration: 0.01ms !important;
   }
 }

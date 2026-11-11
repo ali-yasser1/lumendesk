@@ -1,132 +1,110 @@
 // builds the records page and drives its filtering, sorting and paging
-import { announce, el, showToast } from "../ui.js";
+import { announce, el, showMessage } from "../ui.js";
 import { getAppointments } from "../api.js";
-import { buildToolbar, filterAppointments, readState, resetControls, saveState, sortAppointments, sortLabels } from "./records-filters.js";
+import { buildToolbar, filterAppointments, freshState, resetControls, sortAppointments, sortLabels } from "./records-filters.js";
 import { buildRow, buildTable, emptyAll, emptyFiltered, focusResults, renderError, renderLoading, renderPager } from "./records-table.js";
 import { openDeleteDialog } from "./delete-dialog.js";
 
 const pageSize = 10;
 
+// counts how many pages the filtered list needs
+const totalPages = (view) => Math.max(1, Math.ceil(view.filtered.length / pageSize));
+
+// builds the result count text shown above the table
+const statusMessage = (view) => {
+  const shown = view.filtered.length === 0 ? 0 : Math.min(pageSize, view.filtered.length - (view.page - 1) * pageSize);
+  return `Showing ${shown} of ${view.filtered.length} matching appointments (${view.appointments.length} total)`;
+};
+
+// updates the count after a short delay so fast changes are announced once
+const updateStatus = (view) => {
+  window.clearTimeout(view.statusTimer);
+  view.statusTimer = window.setTimeout(() => { view.statusText.textContent = statusMessage(view); }, 200);
+};
+
+// filters, sorts and renders the table
+const applyFilters = (view, resetPage = true) => {
+  view.filtered = sortAppointments(filterAppointments(view.appointments, view.state), view.state);
+  if (resetPage) { view.page = 1; }
+  renderTable(view);
+};
+
+// sorts by a column and announces the new order for screen readers
+const sortBy = (view, key) => {
+  const state = view.state;
+  if (state.sortKey === key) { state.sortDir = state.sortDir === "asc" ? "desc" : "asc"; }
+  else { state.sortKey = key; state.sortDir = "asc"; }
+  view.page = 1;
+  applyFilters(view);
+  announce(`Sorted by ${sortLabels[key]}, ${state.sortDir === "asc" ? "ascending" : "descending"}`);
+};
+
+// renders the table or the matching empty state, then the pager and count
+const renderTable = (view) => {
+  view.tableRegion.setAttribute("aria-busy", "false");
+  view.page = Math.min(Math.max(1, view.page), totalPages(view));
+  if (view.appointments.length === 0) { return showResults(view, emptyAll()); }
+  if (view.filtered.length === 0) { return showResults(view, emptyFiltered(() => clearFilters(view))); }
+  const rows = view.filtered
+    .slice((view.page - 1) * pageSize, view.page * pageSize)
+    .map((item, index) => buildRow(item, index, (appointment, opener) => onDelete(view, appointment, opener)));
+  showResults(view, buildTable(rows, view.state, (key) => sortBy(view, key)));
+};
+
+// places results in the table region and refreshes the pager and count
+const showResults = (view, content) => {
+  view.tableRegion.replaceChildren(content);
+  renderPager(view.pager, view.page, totalPages(view), view.filtered.length === 0, (next) => goTo(view, next));
+  updateStatus(view);
+};
+
+// opens the delete dialog and refreshes the table after a confirmed delete
+const onDelete = (view, appointment, opener) => {
+  openDeleteDialog(appointment, opener, view.main, () => {
+    view.appointments = view.appointments.filter((item) => item.id !== appointment.id);
+    applyFilters(view, false);
+    showMessage("Appointment deleted", "success");
+    window.setTimeout(() => view.tableRegion.focus(), 0);
+  });
+};
+
+// moves to another page and announces the page number
+const goTo = (view, next) => {
+  if (next < 1 || next > totalPages(view)) { return; }
+  view.page = next;
+  renderTable(view);
+  focusResults(view.tableRegion);
+  announce(`Page ${view.page} of ${totalPages(view)}`);
+};
+
+// fetches the appointments and renders them
+const loadRecords = async (view) => {
+  renderLoading(view.tableRegion, view.pager, view.statusText);
+  try {
+    view.appointments = await getAppointments();
+    if (view.tableRegion.isConnected) { applyFilters(view); }
+  } catch (error) {
+    if (view.tableRegion.isConnected) { renderError(view.tableRegion, view.pager, () => loadRecords(view)); }
+  }
+};
+
+// resets the toolbar controls and reruns the filters
+const clearFilters = (view) => {
+  resetControls(view.state, view.controls);
+  applyFilters(view);
+  announce("Filters cleared");
+  view.controls.search.focus();
+};
+
+// builds the records page shell and starts loading the appointments
 export const renderRecords = (main) => {
-  const state = readState();
-  let appointments = [];
-  let filtered = [];
-  let page = 1;
-  let statusTimer;
-  const statusText = el("p", { class: "records-status", role: "status" });
-  const tableRegion = el("div", { class: "records-table-wrap", tabindex: "-1", "aria-busy": "true" });
-  const pager = el("nav", { class: "pagination", "aria-label": "Pagination", hidden: true });
-
-  // counts how many pages the filtered list needs
-  const totalPages = () => Math.max(1, Math.ceil(filtered.length / pageSize));
-
-  // builds the result count text shown above the table
-  const statusMessage = () => {
-    const shown = filtered.length === 0 ? 0 : Math.min(pageSize, filtered.length - (page - 1) * pageSize);
-    return `Showing ${shown} of ${filtered.length} matching appointments (${appointments.length} total)`;
+  const view = {
+    main, state: freshState(), appointments: [], filtered: [], page: 1, statusTimer: null,
+    statusText: el("p", { class: "records-status", role: "status" }),
+    tableRegion: el("div", { class: "records-table-wrap", tabindex: "-1", "aria-busy": "true" }),
+    pager: el("nav", { class: "pagination", "aria-label": "Pagination", hidden: true })
   };
-
-  // updates the count after a short delay so fast changes are announced once
-  const updateStatus = () => {
-    window.clearTimeout(statusTimer);
-    statusTimer = window.setTimeout(() => {
-      statusText.textContent = statusMessage();
-    }, 200);
-  };
-
-  // filters, sorts and renders the table
-  const applyFilters = (resetPage = true) => {
-    filtered = sortAppointments(filterAppointments(appointments, state), state);
-    if (resetPage) {
-      page = 1;
-    }
-    renderTable();
-  };
-
-  // sorts by a column and announces the new order for screen readers
-  const sortBy = (key) => {
-    if (state.sortKey === key) {
-      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-    } else {
-      state.sortKey = key;
-      state.sortDir = "asc";
-    }
-    saveState(state);
-    page = 1;
-    applyFilters();
-    announce(`Sorted by ${sortLabels[key]}, ${state.sortDir === "asc" ? "ascending" : "descending"}`);
-  };
-
-  // renders the table or the matching empty state, then the pager and count
-  const renderTable = () => {
-    tableRegion.setAttribute("aria-busy", "false");
-    page = Math.min(Math.max(1, page), totalPages());
-    if (appointments.length === 0) {
-      return showResults(emptyAll());
-    }
-    if (filtered.length === 0) {
-      return showResults(emptyFiltered(clearFilters));
-    }
-    const rows = filtered
-      .slice((page - 1) * pageSize, page * pageSize)
-      .map((item, index) => buildRow(item, index, onDelete));
-    showResults(buildTable(rows, state, sortBy));
-  };
-
-  // places results in the table region and refreshes the pager and count
-  const showResults = (content) => {
-    tableRegion.replaceChildren(content);
-    renderPager(pager, page, totalPages(), filtered.length === 0, goTo);
-    updateStatus();
-  };
-
-  // opens the delete dialog and refreshes the table after a confirmed delete
-  const onDelete = (appointment, opener) => {
-    openDeleteDialog(appointment, opener, main, () => {
-      appointments = appointments.filter((item) => item.id !== appointment.id);
-      applyFilters(false);
-      showToast("Appointment deleted", "success");
-      announce("Appointment deleted");
-      window.setTimeout(() => tableRegion.focus(), 0);
-    });
-  };
-
-  // moves to another page and announces the page number
-  const goTo = (next) => {
-    if (next < 1 || next > totalPages()) {
-      return;
-    }
-    page = next;
-    renderTable();
-    focusResults(tableRegion);
-    announce(`Page ${page} of ${totalPages()}`);
-  };
-
-  // fetches the appointments and renders them
-  const load = async () => {
-    renderLoading(tableRegion, pager, statusText);
-    try {
-      appointments = await getAppointments();
-      if (!tableRegion.isConnected) {
-        return;
-      }
-      applyFilters();
-    } catch (error) {
-      if (tableRegion.isConnected) {
-        renderError(tableRegion, pager, load);
-      }
-    }
-  };
-
-  // resets the saved state and every control, then reruns the filters
-  const clearFilters = () => {
-    resetControls(state, controls);
-    applyFilters();
-    announce("Filters cleared");
-    controls.search.focus();
-  };
-
-  const controls = buildToolbar(state, applyFilters, clearFilters);
+  view.controls = buildToolbar(view.state, () => applyFilters(view), () => clearFilters(view));
   main.append(
     el("div", { class: "view records-view" }, [
       el("header", { class: "view-header page-header" }, [
@@ -136,9 +114,8 @@ export const renderRecords = (main) => {
         ]),
         el("a", { class: "button button-primary", href: "#/appointments/new", text: "New appointment" })
       ]),
-      controls.toolbar, statusText, tableRegion, pager
+      view.controls.toolbar, view.statusText, view.tableRegion, view.pager
     ])
   );
-
-  load();
+  loadRecords(view);
 };

@@ -8,25 +8,15 @@
     <title>LumenDesk</title>
     <link rel="stylesheet" href="/css/tokens.css">
     <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/components.css">
-    <link rel="stylesheet" href="/css/forms.css">
-    <link rel="stylesheet" href="/css/records.css">
-    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/pages.css">
     <script type="module" src="/js/main.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
     <div id="status" role="status" aria-live="polite" aria-atomic="true" class="visually-hidden"></div>
     <header class="site-header">
-      <a class="brand" href="#/dashboard" aria-label="LumenDesk home">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span>LumenDesk</span>
-      </a>
-      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" hidden>
-        <span class="nav-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
-        <span class="visually-hidden">Menu</span>
-      </button>
+      <a class="brand" href="#/dashboard" aria-label="LumenDesk home">LumenDesk</a>
       <nav class="site-nav" id="primary-nav" aria-label="Main" hidden>
         <ul>
           <li><a href="#/dashboard">Dashboard</a></li>
@@ -34,8 +24,9 @@
           <li><a href="#/records">Records</a></li>
         </ul>
       </nav>
-      <button class="button button-ghost signout-button" id="signout" type="button" hidden>Sign out</button>
+      <button class="button signout-button" id="signout" type="button" hidden>Sign out</button>
     </header>
+    <p class="page-message" id="page-message" role="status"></p>
     <main id="main" tabindex="-1"></main>
     <footer class="site-footer">
       <p>LumenDesk clinic workspace <span aria-hidden="true">·</span> © <span id="year">2026</span></p>

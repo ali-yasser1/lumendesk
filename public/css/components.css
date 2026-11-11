@@ -1,201 +1,136 @@
-/* shared widgets, buttons, badges, state panels, toasts and the modal */
+/* shared widgets, buttons, fields, badges, messages, states and the dialog */
+
+/* flat buttons, outlined by default and solid for primary actions */
 .button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  padding: var(--space-3) var(--space-5);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
-  color: var(--color-text);
-  font-weight: var(--weight-semibold);
-  text-decoration: none;
-  background: linear-gradient(135deg, rgba(127, 247, 255, 0.16), rgba(198, 168, 255, 0.18));
-  box-shadow: var(--shadow-sm);
-  transition:
-    transform var(--duration-base) var(--ease-standard),
-    box-shadow var(--duration-base) var(--ease-standard),
-    background var(--duration-base) var(--ease-standard);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: 2.75rem; padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius);
+  color: var(--color-text); font-weight: var(--weight-semibold); text-decoration: none; background: transparent;
 }
+.button:hover { background-color: #1c2b52; }
+.button:disabled { cursor: not-allowed; opacity: 0.65; }
 
-.button:hover {
-  background: linear-gradient(135deg, rgba(127, 247, 255, 0.24), rgba(198, 168, 255, 0.26));
-  box-shadow: var(--shadow-md), var(--glow-cyan);
-  transform: translateY(-2px);
-}
-
-.button:active { box-shadow: var(--shadow-sm); transform: translateY(0); }
-.button:disabled { cursor: not-allowed; opacity: 0.65; transform: none; }
-
-/* the bright gradient button for primary actions */
-.button-primary {
-  border-color: transparent;
-  color: var(--color-text-inverse);
-  background: linear-gradient(135deg, var(--color-cyan), var(--color-violet));
-}
-
-.button-primary:hover {
-  color: var(--color-text-inverse);
-  background: linear-gradient(135deg, var(--color-cyan), var(--color-pink));
-  box-shadow: var(--shadow-md), var(--glow-violet);
-}
-
-/* the quiet button used next to primary ones */
-.button-ghost { border-color: var(--color-border-strong); background: transparent; }
+/* the solid accent button for primary actions */
+.button-primary { border-color: var(--color-cyan); color: var(--color-text-inverse); background-color: var(--color-cyan); }
+.button-primary:hover { border-color: var(--color-cyan-strong); color: var(--color-text-inverse); background-color: var(--color-cyan-strong); }
 
 /* the destructive button used for deletions */
-.button-danger {
+.button-danger { border-color: var(--color-error); color: var(--color-error); background-color: var(--color-error-bg); }
+.button-danger:hover { background-color: #471821; }
+
+/* one labelled control */
+.field { display: grid; gap: var(--space-2); }
+.field label { font-weight: var(--weight-semibold); }
+
+/* hint text and the character counter under a field */
+.field-hint { color: var(--color-text-muted); font-size: var(--text-sm); }
+.char-counter { font-variant-numeric: tabular-nums; }
+
+/* shared sizing and colour for every text style control */
+.field input, .field select, .field textarea {
+  width: 100%; min-height: 2.75rem; padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius);
+  color: var(--color-text); background-color: var(--color-bg);
+}
+.field textarea { min-height: 8rem; resize: vertical; }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--color-cyan); }
+
+/* the red border shown when a control fails validation */
+.field input[aria-invalid="true"], .field select[aria-invalid="true"], .field textarea[aria-invalid="true"] {
   border-color: var(--color-error);
-  color: var(--color-error);
-  background-color: var(--color-error-bg);
 }
 
-.button-danger:hover {
-  color: var(--color-error);
-  background-color: var(--color-error-bg);
-  box-shadow: var(--shadow-md), var(--glow-pink);
+/* radios and checkboxes keep their native look */
+.field input[type="radio"], .field input[type="checkbox"] {
+  width: auto; min-height: auto; padding: 0; border: 0;
+  accent-color: var(--color-cyan); background: transparent;
 }
 
-/* the frosted panel treatment behind cards */
-.glass {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-glass);
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-}
+/* the fieldset that wraps the status radios */
+.radio-fieldset { display: grid; gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.radio-fieldset legend { padding: 0; font-weight: var(--weight-semibold); }
+.radio-fieldset:has([aria-invalid="true"]) { outline: 1px solid var(--color-error); outline-offset: var(--space-2); border-radius: var(--radius); }
+.radio-group { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass { background: var(--color-surface-glass-strong); }
+/* each status option is a flat labelled control */
+.radio-option {
+  display: inline-flex; align-items: center; gap: var(--space-2); min-height: 2.75rem;
+  padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius);
+  background-color: var(--color-surface); cursor: pointer;
 }
+.radio-option:hover { border-color: var(--color-cyan); background-color: rgba(127, 247, 255, 0.1); }
 
-/* small pill labels for urgent and telehealth marks */
+/* the checkbox line stays a single row */
+.checkbox-field label { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 2.75rem; justify-self: start; }
+
+/* the red message under a failed field */
+.field-error { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--color-error); font-size: var(--text-sm); }
+.field-error[hidden] { display: none; }
+
+/* the red box listed at the top of a form with many errors */
+.error-summary { padding: var(--space-4); border: 1px solid var(--color-error); border-radius: var(--radius); background-color: var(--color-error-bg); }
+.error-summary[hidden] { display: none; }
+.error-summary:focus { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.error-summary h2 { font-size: var(--text-lg); }
+.error-summary ul { display: grid; gap: var(--space-1); margin-top: var(--space-2); padding-left: var(--space-5); }
+.error-summary li { display: flex; align-items: center; min-height: 2.75rem; }
+.error-summary a { color: var(--color-error); font-weight: var(--weight-semibold); }
+
+/* small flat labels for urgent and telehealth marks */
 .badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 1.75rem;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid;
-  border-radius: var(--radius-pill);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3);
+  border: 1px solid; border-radius: var(--radius);
+  font-size: var(--text-xs); font-weight: var(--weight-semibold);
 }
-
 .badge-urgent { border-color: var(--color-error); color: var(--color-error); background-color: var(--color-error-bg); }
 .badge-telehealth { border-color: var(--color-info); color: var(--color-info); background-color: var(--color-info-bg); }
 
-/* the dashed panel shown for empty, missing or failed views */
-.state-panel {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  border: 1px dashed var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-glass);
+/* the status message shown at the top of the page content */
+.page-message {
+  display: flex; align-items: center; gap: var(--space-2);
+  width: min(100% - 2rem, var(--content-max)); max-width: none; margin: var(--space-4) auto 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface);
 }
+.page-message:empty { display: none; }
+.page-message-icon { font-weight: var(--weight-bold); }
+.page-message-success { border-color: var(--color-success); background-color: var(--color-success-bg); }
+.page-message-success .page-message-icon { color: var(--color-success); }
+.page-message-error { border-color: var(--color-error); background-color: var(--color-error-bg); }
+.page-message-error .page-message-icon { color: var(--color-error); }
+.page-message-info { border-color: var(--color-info); background-color: var(--color-info-bg); }
+.page-message-info .page-message-icon { color: var(--color-info); }
 
+/* the panel shown for empty, missing or failed views */
+.state-panel {
+  display: grid; justify-items: start; gap: var(--space-3); padding: var(--space-5);
+  border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface);
+}
 .state-panel h2, .state-panel h3 { font-size: var(--text-lg); }
 .state-panel p { color: var(--color-text-muted); }
 
-/* the solid red variant used when a view fails to load */
-.error-state { border-color: var(--color-error); border-style: solid; background-color: var(--color-error-bg); }
+/* the red variant used when a view fails to load */
+.error-state { border-color: var(--color-error); background-color: var(--color-error-bg); }
 
 /* the plain loading message shown inside a busy region */
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  min-height: 6rem;
-  color: var(--color-text-muted);
-}
+.loading { display: flex; align-items: center; justify-content: center; gap: var(--space-3); min-height: 6rem; color: var(--color-text-muted); }
 
-/* the small spinning ring that accompanies loading text */
+/* the only animation in the app, the spinning loading ring */
 .spinner {
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
+  width: 1rem; height: 1rem;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-
-/* the toast that confirms an action at the bottom of the screen */
-.toast-region {
-  position: fixed;
-  right: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 200;
-  display: grid;
-  gap: var(--space-2);
-  width: min(calc(100% - 2rem), 24rem);
-  pointer-events: none;
-}
-
-.toast {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid;
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-glass-strong);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
-  animation: toast-in var(--duration-base) var(--ease-standard);
-}
-
-.toast-icon {
-  display: inline-grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-weight: var(--weight-bold);
-}
-
-.toast-message { color: var(--color-text); }
-.toast-success { border-color: var(--color-success); color: var(--color-success); background-color: var(--color-success-bg); }
-.toast-error { border-color: var(--color-error); color: var(--color-error); background-color: var(--color-error-bg); }
-.toast-info { border-color: var(--color-info); color: var(--color-info); background-color: var(--color-info-bg); }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* the confirmation dialog shown before a delete */
 .modal {
-  width: min(calc(100% - 2rem), 30rem);
-  max-height: calc(100dvh - 2rem);
-  padding: 0;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  color: var(--color-text);
-  background: var(--color-surface-glass-strong);
-  box-shadow: var(--shadow-lg), var(--glow-pink);
-  overflow: auto;
+  width: min(calc(100% - 2rem), 30rem); max-height: calc(100dvh - 2rem); padding: 0;
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius);
+  color: var(--color-text); background: var(--color-surface); overflow: auto;
 }
-
-.modal::backdrop {
-  background: var(--color-scrim);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
+.modal::backdrop { background: var(--color-scrim); }
 .modal-inner { display: grid; gap: var(--space-4); padding: var(--space-6); }
 .modal h2 { font-size: var(--text-xl); }
 .modal p { color: var(--color-text-muted); }
 .modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
-
-/* the only two keyframes left, one shot toast entry and the spinner ring */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(0.75rem); }
-  to { opacity: 1; transform: translateY(0); }
-}

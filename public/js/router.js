@@ -13,10 +13,7 @@ const editPattern = /^#\/appointments\/edit\/([1-9]\d*)$/;
 const routes = {
   "#/signin": { title: "Sign in", render: renderSignIn },
   "#/dashboard": { title: "Dashboard", render: renderDashboard },
-  "#/appointments/new": {
-    title: "New appointment",
-    render: (main) => renderAppointmentForm(main)
-  },
+  "#/appointments/new": { title: "New appointment", render: (main) => renderAppointmentForm(main) },
   "#/records": { title: "Records", render: renderRecords }
 };
 
@@ -27,30 +24,19 @@ const getUser = () => sessionStorage.getItem("lumen-user");
 const resolveRoute = (hash) => {
   const edit = hash.match(editPattern);
   if (edit) {
-    return {
-      title: "Edit appointment",
-      current: "#/records",
-      render: (main) => renderAppointmentForm(main, Number(edit[1]))
-    };
+    return { title: "Edit appointment", current: "#/records", render: (main) => renderAppointmentForm(main, Number(edit[1])) };
   }
   return routes[hash] || null;
 };
 
 // replaces the hash without leaving a new history entry
-const setHash = (hash) => {
-  if (location.hash !== hash) {
-    history.replaceState(null, "", hash);
-  }
-};
+const setHash = (hash) => { if (location.hash !== hash) { history.replaceState(null, "", hash); } };
 
 // marks the nav link of the current view with aria current
 const updateCurrentLink = (target) => {
   document.querySelectorAll(".site-nav a").forEach((link) => {
-    if (link.getAttribute("href") === target) {
-      link.setAttribute("aria-current", "page");
-    } else {
-      link.removeAttribute("aria-current");
-    }
+    if (link.getAttribute("href") === target) { link.setAttribute("aria-current", "page"); }
+    else { link.removeAttribute("aria-current"); }
   });
 };
 
@@ -58,21 +44,9 @@ const updateCurrentLink = (target) => {
 const render = () => {
   let hash = location.hash;
   let route = resolveRoute(hash);
-  if (!route) {
-    hash = defaultRoute;
-    setHash(hash);
-    route = resolveRoute(hash);
-  }
-  if (!getUser() && hash !== signInRoute) {
-    hash = signInRoute;
-    setHash(hash);
-    route = resolveRoute(hash);
-  }
-  if (getUser() && hash === signInRoute) {
-    hash = defaultRoute;
-    setHash(hash);
-    route = resolveRoute(hash);
-  }
+  if (!route) { hash = defaultRoute; setHash(hash); route = resolveRoute(hash); }
+  if (!getUser() && hash !== signInRoute) { hash = signInRoute; setHash(hash); route = resolveRoute(hash); }
+  if (getUser() && hash === signInRoute) { hash = defaultRoute; setHash(hash); route = resolveRoute(hash); }
   const main = document.querySelector("#main");
   main.replaceChildren();
   route.render(main, getUser());

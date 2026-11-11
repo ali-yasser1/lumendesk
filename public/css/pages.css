@@ -1,0 +1,155 @@
+/* page specific layouts for sign in, the appointment form, the dashboard and records */
+
+/* the appointment form page */
+.form-panel { display: grid; gap: var(--space-5); }
+.appointment-form {
+  display: grid; gap: var(--space-5); padding: clamp(var(--space-4), 4vw, var(--space-6));
+  border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface);
+}
+
+/* a grouped box of controls inside the appointment form */
+.form-section { display: grid; gap: var(--space-4); min-width: 0; margin: 0; padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius); }
+.form-section legend { padding-inline: var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-bold); }
+
+/* the responsive grid that lays out the fields in each section */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); align-items: start; }
+.form-grid > .radio-fieldset, .form-grid > .checkbox-field { grid-column: 1 / -1; }
+
+/* the row of submit buttons at the end of a form */
+.form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* the centred sign in card */
+.signin-view { display: grid; place-items: center; min-height: 60vh; }
+.signin-panel { width: min(100%, 30rem); padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.signin-panel h1 { margin-bottom: var(--space-2); }
+.signin-form { display: grid; gap: var(--space-5); margin-top: var(--space-5); }
+
+/* the password line keeps its input and reveal button side by side */
+.password-field { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.password-field input { flex: 1 1 12rem; }
+.signin-submit { width: 100%; }
+
+/* the sections stacked inside the dashboard view */
+.dashboard-content { display: grid; gap: var(--space-6); }
+.dashboard-section { display: grid; gap: var(--space-4); }
+
+/* the plain overview list of four stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--space-4); list-style: none; }
+.stat-card { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.stat-number { font-size: var(--text-3xl); font-variant-numeric: tabular-nums; line-height: 1; }
+.stat-label { color: var(--color-text-muted); font-weight: var(--weight-medium); }
+
+/* the list of upcoming appointments */
+.appointment-list { display: grid; gap: var(--space-3); list-style: none; }
+.appointment-item { padding: var(--space-4) var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.appointment-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.appointment-head h3 { font-size: var(--text-lg); }
+.badge-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.appointment-meta { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); margin-top: var(--space-3); }
+.appointment-meta div { display: flex; align-items: baseline; gap: var(--space-1); }
+.appointment-meta dt { color: var(--color-text-muted); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-transform: uppercase; }
+.appointment-meta dd { color: var(--color-text-muted); }
+
+/* the records page header with its title and new appointment link */
+.page-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.page-header > div { display: grid; gap: var(--space-2); }
+
+/* the panel holding search, filters and the clear button */
+.records-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); }
+.records-toolbar > .field { flex: 1 1 10rem; }
+.records-toolbar > .toolbar-search { flex: 2 1 18rem; }
+.toolbar-actions { display: flex; flex: 0 0 auto; align-items: end; }
+
+/* the live count of matching rows */
+.records-status { min-height: 1.6rem; color: var(--color-text-muted); font-weight: var(--weight-medium); }
+
+/* the framed panel around the results table */
+.records-table-wrap { border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); overflow-x: auto; }
+
+/* the results table itself */
+.records-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-sm); }
+.records-table th, .records-table td { padding: var(--space-3); border-bottom: 1px solid var(--color-border); text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
+.records-table thead th { color: var(--color-text-muted); font-size: var(--text-xs); text-transform: uppercase; background: var(--color-bg); }
+.records-table tbody th[scope="row"] { font-weight: var(--weight-semibold); }
+.records-table tbody tr:hover { background-color: rgba(127, 247, 255, 0.06); }
+.records-table tbody tr:focus { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+.records-table tbody tr:last-child th, .records-table tbody tr:last-child td { border-bottom: 0; }
+
+/* the header button that flips the sort order */
+.sort-button {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  width: 100%; min-height: 2.75rem; padding: 0; border: 0;
+  color: inherit; font: inherit; text-transform: inherit; background: transparent;
+}
+.sort-button:hover { color: var(--color-cyan); }
+.sort-icon { color: var(--color-text-muted); }
+[aria-sort="ascending"] .sort-button, [aria-sort="descending"] .sort-button { color: var(--color-cyan); }
+
+/* the flat pill that shows one appointment status */
+.status-badge {
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2);
+  border: 1px solid; border-radius: var(--radius);
+  font-size: var(--text-xs); font-weight: var(--weight-semibold); white-space: nowrap;
+}
+.status-scheduled { border-color: var(--color-cyan); color: var(--color-cyan); background-color: rgba(127, 247, 255, 0.1); }
+.status-completed { border-color: var(--color-lime); color: var(--color-lime); background-color: rgba(185, 255, 143, 0.1); }
+.status-cancelled { border-color: var(--color-amber); color: var(--color-amber); background-color: rgba(255, 214, 125, 0.1); }
+.status-no-show { border-color: var(--color-pink); color: var(--color-pink); background-color: rgba(255, 159, 220, 0.1); }
+.status-urgent { border-color: var(--color-error); color: var(--color-error); background-color: var(--color-error-bg); }
+.status-clear { border-color: var(--color-border-strong); color: var(--color-text-muted); background: transparent; }
+
+/* the edit and delete controls at the end of a row */
+.row-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.row-action {
+  display: inline-flex; align-items: center; min-height: 2.75rem; padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius);
+  color: var(--color-cyan); font-size: var(--text-sm); font-weight: var(--weight-semibold);
+  text-decoration: none; background: transparent;
+}
+.row-action:hover { border-color: var(--color-cyan); color: var(--color-text); background-color: rgba(127, 247, 255, 0.1); }
+.row-action-danger { border-color: var(--color-error); color: var(--color-error); }
+.row-action-danger:hover { border-color: var(--color-error); color: var(--color-error); background-color: var(--color-error-bg); }
+
+/* the pager under the table */
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.pagination[hidden] { display: none; }
+.pagination-status { color: var(--color-text-muted); font-weight: var(--weight-semibold); }
+
+/* small screens stack the toolbar and turn rows into cards */
+@media (max-width: 47.99rem) {
+  .records-toolbar { flex-direction: column; align-items: stretch; }
+  .records-toolbar > .field, .records-toolbar > .toolbar-search, .records-toolbar > .checkbox-field { flex: 1 1 auto; }
+  .toolbar-actions .button { width: 100%; }
+
+  .records-table-wrap { border: 0; background: transparent; overflow: visible; }
+  .records-table, .records-table tbody { display: block; width: 100%; }
+
+  .records-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  .records-table tbody { display: grid; gap: var(--space-3); }
+
+  .records-table tbody tr {
+    display: grid; gap: var(--space-2); padding: var(--space-4);
+    border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface);
+  }
+
+  .records-table tbody th,
+  .records-table tbody td {
+    display: grid; grid-template-columns: minmax(5.5rem, 40%) 1fr;
+    gap: var(--space-2); align-items: start; padding: 0; border: 0;
+  }
+
+  .records-table tbody th::before,
+  .records-table tbody td::before {
+    content: attr(data-label); color: var(--color-text-muted);
+    font-size: var(--text-xs); font-weight: var(--weight-semibold); text-transform: uppercase;
+  }
+
+  .records-table tbody th[scope="row"] { font-size: var(--text-lg); }
+  .records-table tbody td:last-child { grid-template-columns: 1fr; }
+  .records-table tbody td:last-child::before { margin-bottom: var(--space-1); }
+  .row-actions { justify-content: flex-start; }
+}
