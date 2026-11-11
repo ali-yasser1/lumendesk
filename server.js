@@ -1,3 +1,4 @@
+// express server that serves the appointment api and the static site
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,11 +8,14 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
+// the appointment types and statuses the api accepts
 const types = new Set(["Check-up", "Follow-up", "Telehealth", "Vaccination", "Lab results"]);
 const statuses = new Set(["Scheduled", "Completed", "Cancelled", "No-show"]);
 
+// trims a value and returns an empty string when it is not text
 const text = (value) => (typeof value === "string" ? value.trim() : "");
 
+// checks that a value is a real calendar date in yyyy mm dd form
 const isDate = (value) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
@@ -21,10 +25,13 @@ const isDate = (value) => {
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 };
 
+// checks that a value is a time in hh mm form within the day
 const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 
+// checks that a patient row exists for the id
 const patientExists = (id) => Boolean(db.prepare("SELECT 1 FROM patients WHERE id = ?").get(id));
 
+// checks one appointment body and returns its errors and clean values
 const validateAppointment = (input) => {
   const body = input && typeof input === "object" ? input : {};
   const errors = {};
@@ -85,27 +92,32 @@ const validateAppointment = (input) => {
   };
 };
 
+// the shared query that joins each appointment with its patient name
 const appointmentQuery = `
   SELECT a.*, p.name AS patient_name
   FROM appointments a
   JOIN patients p ON p.id = a.patient_id
 `;
 
+// returns one appointment by id or null when missing
 const getAppointment = (id) => {
   const row = db.prepare(`${appointmentQuery} WHERE a.id = ?`).get(id);
   return row ? { ...row, urgent: Boolean(row.urgent) } : null;
 };
 
+// returns every appointment ordered by date then time
 const listAppointments = () => db
   .prepare(`${appointmentQuery} ORDER BY a.date, a.time, a.id`)
   .all()
   .map((row) => ({ ...row, urgent: Boolean(row.urgent) }));
 
+// the statement that inserts a new appointment row
 const insertAppointment = db.prepare(`
   INSERT INTO appointments (patient_id, date, time, type, clinician, status, urgent, telehealth_link, followup_ref, notes)
   VALUES (@patientId, @date, @time, @type, @clinician, @status, @urgent, @telehealthLink, @followupRef, @notes)
 `);
 
+// the statement that updates an existing appointment row
 const updateAppointment = db.prepare(`
   UPDATE appointments
   SET patient_id = @patientId,
@@ -121,17 +133,21 @@ const updateAppointment = db.prepare(`
   WHERE id = @id
 `);
 
+// json body parsing with a small size limit
 app.use(express.json({ limit: "100kb" }));
 
+// returns every patient ordered by name
 app.get("/api/patients", (req, res) => {
   res.json(db.prepare("SELECT * FROM patients ORDER BY name").all());
 });
 
+// returns every appointment after a short delay so loading states are visible
 app.get("/api/appointments", async (req, res) => {
   await new Promise((resolve) => setTimeout(resolve, 400));
   res.json(listAppointments());
 });
 
+// creates an appointment after validating the sent values
 app.post("/api/appointments", (req, res) => {
   const { errors, values } = validateAppointment(req.body);
   if (Object.keys(errors).length > 0) {
@@ -141,6 +157,7 @@ app.post("/api/appointments", (req, res) => {
   res.status(201).json(getAppointment(result.lastInsertRowid));
 });
 
+// replaces an appointment after checking it exists and the values are valid
 app.put("/api/appointments/:id", (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) {
@@ -158,6 +175,7 @@ app.put("/api/appointments/:id", (req, res) => {
   res.json(getAppointment(id));
 });
 
+// deletes an appointment when the id matches a row
 app.delete("/api/appointments/:id", (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) {
@@ -170,12 +188,15 @@ app.delete("/api/appointments/:id", (req, res) => {
   res.status(204).end();
 });
 
+// answers unknown api paths with a not found status
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "Not found." });
 });
 
+// serves the static site from the public folder
 app.use(express.static(path.join(root, "public")));
 
+// answers broken request bodies and unexpected errors
 app.use((error, req, res, next) => {
   if (error.type === "entity.parse.failed") {
     return res.status(400).json({ errors: { body: "Send valid JSON." } });
@@ -184,6 +205,7 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: "Something went wrong." });
 });
 
+// starts the server on the chosen port
 app.listen(port, () => {
   console.log(`LumenDesk running at http://localhost:${port}`);
 });

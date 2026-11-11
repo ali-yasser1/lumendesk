@@ -1,7 +1,10 @@
+// shared helpers for inline field errors and the error summary
 import { el } from "./ui.js";
 
+// lists the ids an input is described by so an error id can be added or removed
 const describedBy = (input) => (input.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
 
+// returns every radio that belongs to the same group as the input
 const groupControls = (input) => {
   if (input.type !== "radio" || !input.name) {
     return [input];
@@ -9,8 +12,10 @@ const groupControls = (input) => {
   return Array.from(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`));
 };
 
+// picks the wrapper the error message is appended to
 const errorTarget = (input) => input.closest(".field, fieldset") || input;
 
+// shows or clears the inline error of one input and links it with aria
 export const setFieldError = (input, message) => {
   const id = `${input.id}-error`;
   const existing = document.getElementById(id);
@@ -45,6 +50,7 @@ export const setFieldError = (input, message) => {
   error.hidden = false;
 };
 
+// builds the list of links shown inside the error summary
 export const buildSummary = (fields, messages) => {
   const unique = [...new Set(fields)];
   const count = unique.length;

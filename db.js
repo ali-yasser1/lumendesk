@@ -1,16 +1,20 @@
+// creates the sqlite database, its tables and the demo data
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// the data folder and the database file inside it
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(root, "data");
 fs.mkdirSync(dataDir, { recursive: true });
 
+// opens the database and turns on the safety settings
 const db = new Database(path.join(dataDir, "lumen.db"));
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
+// creates the patients and appointments tables when missing
 db.exec(`
   CREATE TABLE IF NOT EXISTS patients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +42,7 @@ db.exec(`
   );
 `);
 
+// formats a date object as a yyyy mm dd date string
 const toDateText = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -48,6 +53,7 @@ const toDateText = (date) => {
 const patientCount = db.prepare("SELECT COUNT(*) AS count FROM patients").get().count;
 const appointmentCount = db.prepare("SELECT COUNT(*) AS count FROM appointments").get().count;
 
+// fills the empty database with the demo patients and appointments
 if (patientCount === 0 && appointmentCount === 0) {
   const patients = [
     {
@@ -155,6 +161,7 @@ if (patientCount === 0 && appointmentCount === 0) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
+  // inserts the demo rows inside one transaction
   const seed = db.transaction(() => {
     for (const patient of patients) {
       insertPatient.run(patient.name, patient.dob, patient.phone, patient.email, patient.notes);
@@ -170,7 +177,7 @@ if (patientCount === 0 && appointmentCount === 0) {
       const type = types[index % types.length];
       const status = statuses[index % statuses.length];
       const urgent = index % 9 === 0 ? 1 : 0;
-      const telehealthLink = type === "Telehealth" ? `https://meet.example.com/lumen-${index + 1}` : null;
+      const telehealthLink = type === "Telehealth" ? `https://meet.example.com/lumen${index + 1}` : null;
       const followupRef = index % 5 === 0 ? `FU-${2400 + index}` : null;
 
       insertAppointment.run(

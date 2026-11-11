@@ -1,8 +1,7 @@
+/* the design tokens shared by every stylesheet */
 :root {
   --color-bg: #060a17;
-  --color-bg-deep: #03050d;
   --color-surface: #0e1630;
-  --color-surface-raised: #151f42;
   --color-surface-glass: rgba(14, 22, 48, 0.82);
   --color-surface-glass-strong: rgba(10, 16, 36, 0.96);
   --color-border: #2b3b6b;
@@ -20,8 +19,6 @@
   --color-success-bg: #0b2b1c;
   --color-error: #ff9fab;
   --color-error-bg: #33121a;
-  --color-warning: #ffd67d;
-  --color-warning-bg: #33260c;
   --color-info: #8fdcff;
   --color-info-bg: #0b2536;
   --color-focus: #7ff7ff;
@@ -33,7 +30,6 @@
   --aurora-pink: rgba(255, 159, 220, 0.12);
   --aurora-lime: rgba(185, 255, 143, 0.1);
   --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -45,7 +41,6 @@
   --text-5xl: 3.25rem;
   --leading-tight: 1.15;
   --leading-normal: 1.6;
-  --weight-normal: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
@@ -56,12 +51,9 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
-  --space-8: 4rem;
-  --space-9: 6rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.75rem;
   --radius-lg: 1.25rem;
-  --radius-xl: 1.75rem;
   --radius-pill: 999px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.35);
@@ -70,13 +62,8 @@
   --glow-violet: 0 0 0 1px rgba(198, 168, 255, 0.32), 0 0 22px rgba(198, 168, 255, 0.3);
   --glow-pink: 0 0 0 1px rgba(255, 159, 220, 0.32), 0 0 22px rgba(255, 159, 220, 0.3);
   --glow-lime: 0 0 0 1px rgba(185, 255, 143, 0.32), 0 0 22px rgba(185, 255, 143, 0.3);
-  --glow-amber: 0 0 0 1px rgba(255, 214, 125, 0.32), 0 0 22px rgba(255, 214, 125, 0.3);
   --duration-fast: 120ms;
   --duration-base: 200ms;
-  --duration-slow: 400ms;
-  --duration-aurora: 26s;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-aurora: ease-in-out;
   --content-max: 72rem;
-  --header-max: 84rem;
 }
