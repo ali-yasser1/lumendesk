@@ -5,24 +5,38 @@ import { formatDate, formatTime } from "../format.js";
 
 // the messages shown for each invalid field
 export const messages = {
-  patient: "Choose a patient", date: "Enter a date", time: "Enter a time", type: "Choose an appointment type",
+  patient_name: "Enter the patient's name",
+  patient_phone: "Enter a phone number for the new patient",
+  patient_phone_format: "Enter a valid phone number, for example 0100 123 4567",
+  date: "Enter a date", time: "Enter a time", type: "Choose an appointment type",
   clinician: "Enter the clinician's name", status: "Choose a status",
-  followup_ref: "Enter the previous appointment reference", notes: "Keep notes to 500 characters or fewer",
-  telehealth_link: "Enter a link starting with https://"
+  notes: "Keep notes to 500 characters or fewer"
 };
+
+// the characters and length accepted for a patient phone number
+const phonePattern = /^[0-9 +()\-]{6,20}$/;
 
 // checks if a control sits inside a hidden field so it can be skipped
 const isHidden = (input) => Boolean(input.closest("[hidden]"));
 
+// returns the validation message for one input
+const messageFor = (input) => {
+  if (input.id === "patient_phone") {
+    const value = input.value.trim();
+    if (!value) { return messages.patient_phone; }
+    return phonePattern.test(value) ? "" : messages.patient_phone_format;
+  }
+  if (input.required && !input.value.trim()) { return messages[input.id]; }
+  if (input.id === "notes" && input.value.length > 500) { return messages.notes; }
+  return "";
+};
+
 // validates one input and shows or clears its inline error
 export const validateField = (input) => {
-  if (isHidden(input)) { setFieldError(input, ""); return false; }
-  let message = "";
-  if (input.id === "telehealth_link" && !/^https:\/\//i.test(input.value.trim())) { message = messages.telehealth_link; }
-  else if (input.required && !input.value.trim()) { message = messages[input.id]; }
-  else if (input.id === "notes" && input.value.length > 500) { message = messages.notes; }
+  if (isHidden(input)) { setFieldError(input, ""); return ""; }
+  const message = messageFor(input);
   setFieldError(input, message);
-  return Boolean(message);
+  return message;
 };
 
 // checks that a status radio was picked and flags the group when not
@@ -32,22 +46,22 @@ export const validateStatus = (statusInputs) => {
   return checked ? null : statusInputs[0];
 };
 
-// shows or hides one dynamic field and clears it while it is hidden
-const syncField = (fieldWrap, input, visible) => {
-  const changed = fieldWrap.hidden !== !visible;
-  fieldWrap.hidden = !visible;
-  input.required = visible;
-  if (!visible) { input.value = ""; setFieldError(input, ""); }
-  return changed;
-};
+// checks if the typed name matches a patient already in the list
+const isKnownPatient = (fields, value) =>
+  fields.patientNames.some((name) => name.trim().toLowerCase() === value);
 
-// shows the telehealth and follow up fields only for the matching visit type
-export const toggleDynamic = (fields, withAnnouncement = true) => {
-  const telehealthChanged = syncField(fields.telehealthField, fields.telehealthInput, fields.type.value === "Telehealth");
-  const followupChanged = syncField(fields.followupField, fields.followupInput, fields.type.value === "Follow-up");
-  if (!withAnnouncement) { return; }
-  if (telehealthChanged) { announce(`Telehealth link field ${fields.telehealthField.hidden ? "removed" : "added"}`); }
-  else if (followupChanged) { announce(`Previous appointment reference field ${fields.followupField.hidden ? "removed" : "added"}`); }
+// shows the phone field only when the typed name is not an existing patient
+export const togglePhone = (fields, withAnnouncement = true) => {
+  const value = fields.patient.value.trim().toLowerCase();
+  const visible = value !== "" && !isKnownPatient(fields, value);
+  const changed = fields.phoneField.hidden !== !visible;
+  fields.phoneField.hidden = !visible;
+  fields.phoneInput.required = visible;
+  if (!visible) { fields.phoneInput.value = ""; setFieldError(fields.phoneInput, ""); }
+  if (withAnnouncement && changed) {
+    announce(`Phone number field ${visible ? "added" : "removed"}`);
+  }
+  return changed;
 };
 
 // rejects a scheduled visit that lies in the past
@@ -84,12 +98,17 @@ export const clearErrors = (fields) => {
   fields.summary.hidden = true;
 };
 
-// validates every field and returns the list of invalid inputs
+// validates every field and returns the invalid inputs with their messages
 export const collectInvalid = (fields) => {
-  const invalid = fields.allFields.filter((input) => validateField(input));
+  const invalid = [];
+  const fieldMessages = {};
+  fields.allFields.forEach((input) => {
+    const message = validateField(input);
+    if (message) { invalid.push(input); fieldMessages[input.id] = message; }
+  });
   const statusInvalid = validateStatus(fields.statusInputs);
-  if (statusInvalid) { invalid.push(statusInvalid); }
-  return invalid;
+  if (statusInvalid) { invalid.push(statusInvalid); fieldMessages.status = messages.status; }
+  return { invalid, fieldMessages };
 };
 
 // shows the error summary and moves focus to it so it is read at once
@@ -102,11 +121,15 @@ export const showSummary = (fields, invalid, fieldMessages) => {
 // maps server error keys back onto the inputs and shows the summary
 export const mapServerErrors = (fields, error) => {
   const inputs = {
-    patient_id: fields.patient, date: fields.date, time: fields.time, type: fields.type,
+    patient_name: fields.patient, patient_phone: fields.phoneInput, date: fields.date, time: fields.time, type: fields.type,
     clinician: fields.clinician, status: fields.statusInputs[0], notes: fields.notes
   };
   const invalid = [];
   const fieldMessages = {};
+  if (error.errors.patient_phone) {
+    fields.phoneField.hidden = false;
+    fields.phoneInput.required = true;
+  }
   for (const [key, message] of Object.entries(error.errors)) {
     const input = inputs[key];
     if (!input) { continue; }

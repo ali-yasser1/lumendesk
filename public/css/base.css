@@ -1,5 +1,8 @@
 /* element defaults, the solid page backdrop and the global motion switch */
 *, *::before, *::after { box-sizing: border-box; }
+
+/* the hidden attribute always wins over a display rule */
+[hidden] { display: none !important; }
 html { color-scheme: dark; scroll-padding-top: 6rem; }
 body, h1, h2, h3, p, figure, blockquote, dl, dd { margin: 0; }
 ul, ol { margin: 0; padding: 0; }

@@ -15,6 +15,9 @@
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); align-items: start; }
 .form-grid > .radio-fieldset, .form-grid > .checkbox-field { grid-column: 1 / -1; }
 
+/* the patient name stack keeps the phone field directly below it */
+.field-stack { display: grid; gap: var(--space-4); align-content: start; }
+
 /* the row of submit buttons at the end of a form */
 .form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 

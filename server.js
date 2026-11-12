@@ -28,19 +28,29 @@ const isDate = (value) => {
 // checks that a value is a time in hh mm form within the day
 const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 
-// checks that a patient row exists for the id
-const patientExists = (id) => Boolean(db.prepare("SELECT 1 FROM patients WHERE id = ?").get(id));
+// finds a patient by name without caring about letter case
+const findPatient = db.prepare("SELECT id FROM patients WHERE lower(name) = lower(?)");
+
+// the characters and length accepted for a patient phone number
+const phonePattern = /^[0-9 +()\-]{6,20}$/;
 
 // checks one appointment body and returns its errors and clean values
 const validateAppointment = (input) => {
   const body = input && typeof input === "object" ? input : {};
   const errors = {};
-  const patientId = Number(body.patient_id);
 
-  if (!Number.isInteger(patientId) || patientId < 1) {
-    errors.patient_id = "Choose a patient.";
-  } else if (!patientExists(patientId)) {
-    errors.patient_id = "Choose an existing patient.";
+  const patientName = text(body.patient_name);
+  const patient = patientName && patientName.length <= 80 ? findPatient.get(patientName) : null;
+  const patientPhone = text(body.patient_phone);
+
+  if (!patientName) {
+    errors.patient_name = "Enter the patient's name";
+  } else if (patientName.length > 80) {
+    errors.patient_name = "Patient name must be 80 characters or fewer";
+  } else if (!patient && !patientPhone) {
+    errors.patient_phone = "Enter a phone number for the new patient";
+  } else if (!patient && !phonePattern.test(patientPhone)) {
+    errors.patient_phone = "Enter a valid phone number, for example 0100 123 4567";
   }
 
   const date = text(body.date);
@@ -78,15 +88,16 @@ const validateAppointment = (input) => {
   return {
     errors,
     values: {
-      patientId,
+      patientName,
+      patientPhone: patient ? null : patientPhone,
       date,
       time,
       type,
       clinician,
       status,
       urgent: body.urgent === true || body.urgent === 1 || body.urgent === "1" ? 1 : 0,
-      telehealthLink: text(body.telehealth_link) || null,
-      followupRef: text(body.followup_ref) || null,
+      telehealthLink: null,
+      followupRef: null,
       notes
     }
   };
@@ -133,6 +144,31 @@ const updateAppointment = db.prepare(`
   WHERE id = @id
 `);
 
+// the statement that inserts a patient created from a new appointment
+const insertNewPatient = db.prepare(`
+  INSERT INTO patients (name, dob, phone, email, notes)
+  VALUES (?, '', ?, '', '')
+`);
+
+// finds or creates the patient for an appointment
+const patientIdFor = (name, phone) => {
+  const found = findPatient.get(name);
+  if (found) { return found.id; }
+  return insertNewPatient.run(name, phone).lastInsertRowid;
+};
+
+// inserts the patient and appointment in one transaction
+const insertWithPatient = db.transaction((values) => {
+  const patientId = patientIdFor(values.patientName, values.patientPhone);
+  return insertAppointment.run({ ...values, patientId }).lastInsertRowid;
+});
+
+// updates the appointment and creates its patient in one transaction
+const updateWithPatient = db.transaction((values, id) => {
+  const patientId = patientIdFor(values.patientName, values.patientPhone);
+  updateAppointment.run({ ...values, patientId, id });
+});
+
 // json body parsing with a small size limit
 app.use(express.json({ limit: "100kb" }));
 
@@ -153,8 +189,8 @@ app.post("/api/appointments", (req, res) => {
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ errors });
   }
-  const result = insertAppointment.run(values);
-  res.status(201).json(getAppointment(result.lastInsertRowid));
+  const id = insertWithPatient(values);
+  res.status(201).json(getAppointment(id));
 });
 
 // replaces an appointment after checking it exists and the values are valid
@@ -171,7 +207,7 @@ app.put("/api/appointments/:id", (req, res) => {
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ errors });
   }
-  updateAppointment.run({ ...values, id });
+  updateWithPatient(values, id);
   res.json(getAppointment(id));
 });
 
