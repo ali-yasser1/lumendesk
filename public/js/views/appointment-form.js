@@ -3,7 +3,7 @@ import { announce, el, loadingMessage, showMessage, statePanel } from "../ui.js"
 import { createAppointment, getAppointments, getPatients, updateAppointment } from "../api.js";
 import { formatDate } from "../format.js";
 import { applyValues, buildForm, rememberPatient, wireFields } from "./appointment-fields.js";
-import { clearErrors, collectInvalid, extraErrors, mapServerErrors, showSummary, togglePhone } from "./appointment-rules.js";
+import { clearErrors, collectInvalid, extraErrors, mapServerErrors, showSummary, toggleNewPatientNote } from "./appointment-rules.js";
 
 // shown when the edit link points at an appointment that no longer exists
 const renderNotFound = (panel) => {
@@ -24,7 +24,7 @@ const renderLoadError = (panel, retry) => {
 
 // collects the typed values into the object sent to the server
 const payload = (fields) => ({
-  patient_name: fields.patient.value.trim(), patient_phone: fields.phoneInput.value.trim(),
+  patient_name: fields.patient.value.trim(),
   date: fields.date.value, time: fields.time.value,
   type: fields.type.value, clinician: fields.clinician.value.trim(), urgent: fields.urgent.checked,
   status: fields.statusInputs.find((input) => input.checked)?.value || "",
@@ -45,7 +45,7 @@ const setSaving = (fields, active, button) => {
 // resets most fields so another appointment can be booked at once
 const resetForRepeat = (fields) => {
   fields.patient.value = ""; fields.time.value = ""; fields.notes.value = "";
-  fields.urgent.checked = false; togglePhone(fields, false);
+  fields.urgent.checked = false; toggleNewPatientNote(fields, false);
   clearErrors(fields);
   fields.updateCounter();
   fields.patient.focus();
@@ -79,7 +79,7 @@ const handleSubmit = async (event, context, fields) => {
   event.preventDefault();
   if (context.saving) { return; }
   fields.summary.hidden = true;
-  togglePhone(fields);
+  toggleNewPatientNote(fields);
   const checked = collectInvalid(fields);
   if (checked.invalid.length > 0) { return showSummary(fields, checked.invalid, checked.fieldMessages); }
   const extra = extraErrors(fields, context.appointments, context.appointmentId);
@@ -90,7 +90,7 @@ const handleSubmit = async (event, context, fields) => {
 // assembles the form, fills it for the current mode and wires its events
 const renderForm = (panel, context) => {
   const fields = buildForm(context.patients, context.appointments);
-  applyValues(fields, context.appointment); togglePhone(fields, false);
+  applyValues(fields, context.appointment); toggleNewPatientNote(fields, false);
   fields.updateCounter(); wireFields(fields);
   fields.form.addEventListener("submit", (event) => handleSubmit(event, context, fields));
   panel.setAttribute("aria-busy", "false");

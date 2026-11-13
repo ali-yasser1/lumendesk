@@ -31,26 +31,17 @@ const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 // finds a patient by name without caring about letter case
 const findPatient = db.prepare("SELECT id FROM patients WHERE lower(name) = lower(?)");
 
-// the characters and length accepted for a patient phone number
-const phonePattern = /^[0-9 +()\-]{6,20}$/;
-
 // checks one appointment body and returns its errors and clean values
 const validateAppointment = (input) => {
   const body = input && typeof input === "object" ? input : {};
   const errors = {};
 
   const patientName = text(body.patient_name);
-  const patient = patientName && patientName.length <= 80 ? findPatient.get(patientName) : null;
-  const patientPhone = text(body.patient_phone);
 
   if (!patientName) {
     errors.patient_name = "Enter the patient's name";
   } else if (patientName.length > 80) {
     errors.patient_name = "Patient name must be 80 characters or fewer";
-  } else if (!patient && !patientPhone) {
-    errors.patient_phone = "Enter a phone number for the new patient";
-  } else if (!patient && !phonePattern.test(patientPhone)) {
-    errors.patient_phone = "Enter a valid phone number, for example 0100 123 4567";
   }
 
   const date = text(body.date);
@@ -89,7 +80,6 @@ const validateAppointment = (input) => {
     errors,
     values: {
       patientName,
-      patientPhone: patient ? null : patientPhone,
       date,
       time,
       type,
@@ -147,25 +137,25 @@ const updateAppointment = db.prepare(`
 // the statement that inserts a patient created from a new appointment
 const insertNewPatient = db.prepare(`
   INSERT INTO patients (name, dob, phone, email, notes)
-  VALUES (?, '', ?, '', '')
+  VALUES (?, '', '', '', '')
 `);
 
 // finds or creates the patient for an appointment
-const patientIdFor = (name, phone) => {
+const patientIdFor = (name) => {
   const found = findPatient.get(name);
   if (found) { return found.id; }
-  return insertNewPatient.run(name, phone).lastInsertRowid;
+  return insertNewPatient.run(name).lastInsertRowid;
 };
 
 // inserts the patient and appointment in one transaction
 const insertWithPatient = db.transaction((values) => {
-  const patientId = patientIdFor(values.patientName, values.patientPhone);
+  const patientId = patientIdFor(values.patientName);
   return insertAppointment.run({ ...values, patientId }).lastInsertRowid;
 });
 
 // updates the appointment and creates its patient in one transaction
 const updateWithPatient = db.transaction((values, id) => {
-  const patientId = patientIdFor(values.patientName, values.patientPhone);
+  const patientId = patientIdFor(values.patientName);
   updateAppointment.run({ ...values, patientId, id });
 });
 

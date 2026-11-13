@@ -20,7 +20,6 @@ const send = (method, url, data) => request(url, {
 // picks the patient and visit fields the server accepts
 const appointmentBody = (data) => ({
   patient_name: data.patient_name,
-  patient_phone: data.patient_phone,
   date: data.date,
   time: data.time,
   type: data.type,

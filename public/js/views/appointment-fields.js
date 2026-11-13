@@ -2,7 +2,7 @@
 import { announce, el } from "../ui.js";
 import { today } from "../format.js";
 import { setFieldError } from "../form.js";
-import { togglePhone, validateField } from "./appointment-rules.js";
+import { newPatientNoteText, toggleNewPatientNote, validateField } from "./appointment-rules.js";
 
 const types = ["Check-up", "Follow-up", "Telehealth", "Vaccination", "Lab results"];
 const statuses = ["Scheduled", "Completed", "Cancelled", "No-show"];
@@ -28,18 +28,13 @@ const buildStatusField = () => {
   return { inputs, node };
 };
 
-// builds the phone field shown only when a new patient name is typed
-const buildPhoneField = () => {
-  const input = el("input", {
-    id: "patient_phone", name: "patient_phone", type: "tel", autocomplete: "off",
-    "aria-describedby": "patient-phone-hint"
-  });
-  const node = el("div", { class: "field", hidden: true }, [
-    el("label", { for: "patient_phone", text: "Phone number for the new patient" }),
-    input, hint("patient-phone-hint", "Needed because this patient is not in the system yet.")
-  ]);
-  return { input, node };
-};
+// builds the notice shown when the typed name is a new patient
+const buildNewPatientNote = () => el("p", {
+  class: "new-patient-note", id: "new-patient-note", hidden: true
+}, [
+  el("span", { class: "new-patient-note-icon", "aria-hidden": "true", text: "i" }),
+  newPatientNoteText
+]);
 
 // creates the counter update function with its own announce memory
 const counterUpdater = (notes, counter) => {
@@ -71,7 +66,10 @@ const createInputs = (patients, appointments) => {
   const names = [...new Set(appointments.map((item) => item.clinician))].sort((a, b) => a.localeCompare(b));
   const clinicianList = el("datalist", { id: "clinician-list" }, names.map((name) => el("option", { value: name })));
   const urgent = el("input", { id: "urgent", name: "urgent", type: "checkbox", "aria-describedby": "urgent-hint" });
-  const notes = el("textarea", { id: "notes", name: "notes", rows: "5", maxlength: "500", "aria-describedby": "notes-hint notes-counter" });
+  const notes = el("textarea", {
+    id: "notes", name: "notes", rows: "5", maxlength: "500",
+    placeholder: "For example: phone 0100 123 4567", "aria-describedby": "notes-hint notes-counter"
+  });
   const counter = el("p", { class: "field-hint char-counter", id: "notes-counter", text: "500 characters left" });
   return {
     patient, patientList, patientNames: patients.map((item) => item.name),
@@ -79,17 +77,17 @@ const createInputs = (patients, appointments) => {
   };
 };
 
-// stacks the patient name and its phone field in one grid column
-const buildPatientGroup = (inputs, phone) => el("div", { class: "field-stack" }, [
+// stacks the patient name and its new patient notice in one grid column
+const buildPatientGroup = (inputs, note) => el("div", { class: "field-stack" }, [
   field("Patient name", inputs.patient, hint("patient-hint", "Start typing to pick an existing patient, or type a new name to add one.")),
-  inputs.patientList, phone.node
+  inputs.patientList, note
 ]);
 
 // builds the patient and visit section with its grid of fields
-const buildMainSection = (inputs, status, phone) => el("fieldset", { class: "form-section" }, [
+const buildMainSection = (inputs, status, note) => el("fieldset", { class: "form-section" }, [
   el("legend", { text: "Patient and visit" }),
   el("div", { class: "form-grid" }, [
-    buildPatientGroup(inputs, phone),
+    buildPatientGroup(inputs, note),
     field("Date", inputs.date, hint("date-hint", "Use the date picker or type YYYY-MM-DD.")),
     field("Time", inputs.time, hint("time-hint", "Use 24-hour time, for example 14:30.")),
     field("Appointment type", inputs.type, hint("type-hint", "Choose the kind of visit.")),
@@ -105,7 +103,7 @@ const buildMainSection = (inputs, status, phone) => el("fieldset", { class: "for
 // builds the notes section with the character counter
 const buildNotesSection = (inputs) => el("fieldset", { class: "form-section" }, [
   el("legend", { text: "Notes" }),
-  field("Notes", inputs.notes, hint("notes-hint", "Up to 500 characters."), [inputs.counter])
+  field("Notes", inputs.notes, hint("notes-hint", "Optional. Add anything the clinic should know. For a new patient, a phone number or other contact details are helpful."), [inputs.counter])
 ]);
 
 // puts an existing appointment into the inputs, or the defaults for a new one
@@ -118,7 +116,7 @@ export const applyValues = (fields, appointment) => {
   fields.urgent.checked = Boolean(appointment.urgent); fields.notes.value = appointment.notes;
 };
 
-// adds a saved patient name to the list so a repeat booking needs no phone
+// adds a saved patient name to the list so the notice stays hidden next time
 export const rememberPatient = (fields, name) => {
   const value = name.trim();
   const known = fields.patientNames.some((item) => item.trim().toLowerCase() === value.toLowerCase());
@@ -133,7 +131,7 @@ export const wireFields = (fields) => {
     input.addEventListener("blur", () => validateField(input));
     input.addEventListener("input", () => { if (input.value.trim()) { setFieldError(input, ""); } });
   });
-  fields.patient.addEventListener("change", () => { setFieldError(fields.patient, ""); togglePhone(fields); });
+  fields.patient.addEventListener("change", () => { setFieldError(fields.patient, ""); toggleNewPatientNote(fields); });
   fields.type.addEventListener("change", () => setFieldError(fields.type, ""));
   fields.statusInputs.forEach((input) => input.addEventListener("change", () => {
     setFieldError(fields.statusInputs[0], ""); if (fields.date.value) { setFieldError(fields.date, ""); } }));
@@ -145,15 +143,15 @@ export const buildForm = (patients, appointments) => {
   const summary = el("div", { class: "error-summary", role: "alert", tabindex: "-1", hidden: true });
   const inputs = createInputs(patients, appointments);
   const status = buildStatusField();
-  const phone = buildPhoneField();
+  const note = buildNewPatientNote();
   const save = el("button", { class: "button button-primary", type: "submit", name: "destination", value: "stay", text: "Save appointment" });
   const saveRecords = el("button", { class: "button", type: "submit", name: "destination", value: "records", text: "Save and go to records" });
   const form = el("form", { class: "appointment-form", novalidate: true }, [
-    summary, buildMainSection(inputs, status, phone),
+    summary, buildMainSection(inputs, status, note),
     buildNotesSection(inputs), el("div", { class: "form-actions" }, [save, saveRecords])]);
-  const allFields = [inputs.patient, phone.input, inputs.date, inputs.time, inputs.type, inputs.clinician, inputs.notes];
+  const allFields = [inputs.patient, inputs.date, inputs.time, inputs.type, inputs.clinician, inputs.notes];
   return {
     ...inputs, form, summary, save, saveRecords, allFields, statusInputs: status.inputs,
-    phoneInput: phone.input, phoneField: phone.node
+    patientNote: note
   };
 };

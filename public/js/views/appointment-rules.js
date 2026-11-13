@@ -3,29 +3,22 @@ import { announce, showMessage } from "../ui.js";
 import { buildSummary, setFieldError } from "../form.js";
 import { formatDate, formatTime } from "../format.js";
 
+// the notice shown when the typed name is a new patient
+export const newPatientNoteText = "New patient. You can add a phone number or other contact details in Notes if you have them. This is optional.";
+
 // the messages shown for each invalid field
 export const messages = {
   patient_name: "Enter the patient's name",
-  patient_phone: "Enter a phone number for the new patient",
-  patient_phone_format: "Enter a valid phone number, for example 0100 123 4567",
   date: "Enter a date", time: "Enter a time", type: "Choose an appointment type",
   clinician: "Enter the clinician's name", status: "Choose a status",
   notes: "Keep notes to 500 characters or fewer"
 };
 
-// the characters and length accepted for a patient phone number
-const phonePattern = /^[0-9 +()\-]{6,20}$/;
-
-// checks if a control sits inside a hidden field so it can be skipped
-const isHidden = (input) => Boolean(input.closest("[hidden]"));
+// the id of the new patient notice linked to the name input
+const noteId = "new-patient-note";
 
 // returns the validation message for one input
 const messageFor = (input) => {
-  if (input.id === "patient_phone") {
-    const value = input.value.trim();
-    if (!value) { return messages.patient_phone; }
-    return phonePattern.test(value) ? "" : messages.patient_phone_format;
-  }
   if (input.required && !input.value.trim()) { return messages[input.id]; }
   if (input.id === "notes" && input.value.length > 500) { return messages.notes; }
   return "";
@@ -33,7 +26,6 @@ const messageFor = (input) => {
 
 // validates one input and shows or clears its inline error
 export const validateField = (input) => {
-  if (isHidden(input)) { setFieldError(input, ""); return ""; }
   const message = messageFor(input);
   setFieldError(input, message);
   return message;
@@ -50,18 +42,22 @@ export const validateStatus = (statusInputs) => {
 const isKnownPatient = (fields, value) =>
   fields.patientNames.some((name) => name.trim().toLowerCase() === value);
 
-// shows the phone field only when the typed name is not an existing patient
-export const togglePhone = (fields, withAnnouncement = true) => {
+// adds or removes the notice id from the name input description
+const setNoteDescription = (input, visible) => {
+  const ids = (input.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean).filter((id) => id !== noteId);
+  if (visible) { ids.push(noteId); }
+  if (ids.length > 0) { input.setAttribute("aria-describedby", ids.join(" ")); }
+  else { input.removeAttribute("aria-describedby"); }
+};
+
+// shows the notice only when the typed name is not an existing patient
+export const toggleNewPatientNote = (fields, withAnnouncement = true) => {
   const value = fields.patient.value.trim().toLowerCase();
   const visible = value !== "" && !isKnownPatient(fields, value);
-  const changed = fields.phoneField.hidden !== !visible;
-  fields.phoneField.hidden = !visible;
-  fields.phoneInput.required = visible;
-  if (!visible) { fields.phoneInput.value = ""; setFieldError(fields.phoneInput, ""); }
-  if (withAnnouncement && changed) {
-    announce(`Phone number field ${visible ? "added" : "removed"}`);
-  }
-  return changed;
+  const changed = fields.patientNote.hidden !== !visible;
+  fields.patientNote.hidden = !visible;
+  setNoteDescription(fields.patient, visible);
+  if (withAnnouncement && changed && visible) { announce(newPatientNoteText); }
 };
 
 // rejects a scheduled visit that lies in the past
@@ -121,15 +117,11 @@ export const showSummary = (fields, invalid, fieldMessages) => {
 // maps server error keys back onto the inputs and shows the summary
 export const mapServerErrors = (fields, error) => {
   const inputs = {
-    patient_name: fields.patient, patient_phone: fields.phoneInput, date: fields.date, time: fields.time, type: fields.type,
+    patient_name: fields.patient, date: fields.date, time: fields.time, type: fields.type,
     clinician: fields.clinician, status: fields.statusInputs[0], notes: fields.notes
   };
   const invalid = [];
   const fieldMessages = {};
-  if (error.errors.patient_phone) {
-    fields.phoneField.hidden = false;
-    fields.phoneInput.required = true;
-  }
   for (const [key, message] of Object.entries(error.errors)) {
     const input = inputs[key];
     if (!input) { continue; }
